@@ -30,6 +30,51 @@ Alpine.data('suggest', (initial = '', keepRecent = false) => ({
     open: false,
     active: -1,
 
+    /*
+     * Whether the current term leads anywhere, answered by /resolve while the
+     * visitor types. The form reads it to decide its target: a match opens the
+     * destination in a new tab, anything else stays in this one.
+     *
+     * It starts false and returns to false the moment the term changes, so an
+     * unanswered check submits in-tab. That is the safe direction to be wrong
+     * in - a search that stays put is ordinary, a tab that opens onto "no
+     * results" is the thing being fixed.
+     */
+    hit: false,
+    checkTimer: null,
+
+    /*
+     * Call this as `$data.checkTarget()`, never bare. Invoked bare from an
+     * x-on expression, `this` is Alpine's temporary evaluator scope rather
+     * than the component, and the write below - which happens 250ms later,
+     * after that scope is gone - lands nowhere at all.
+     */
+    checkTarget() {
+        const state = this;
+
+        clearTimeout(state.checkTimer);
+        state.hit = false;
+
+        const q = state.term.trim();
+
+        if (q === '') return;
+
+        state.checkTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/resolve?q=${encodeURIComponent(q)}`, {
+                    headers: { Accept: 'application/json' },
+                });
+
+                // The term may have moved on while this was in flight.
+                if (!res.ok || q !== state.term.trim()) return;
+
+                state.hit = (await res.json()).hit === true;
+            } catch {
+                // Offline, blocked, rate-limited: leave it in-tab.
+            }
+        }, 250);
+    },
+
     focusInput() {
         this.$refs.input?.focus();
     },

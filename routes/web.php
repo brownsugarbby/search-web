@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\RedirectController;
+use App\Http\Controllers\ResolveController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SuggestController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,15 @@ Route::get('/suggest', SuggestController::class)
     ->middleware($suggestThrottle)
     ->name('suggest');
 
+/*
+| Whether a query leads anywhere, asked by the search form before it submits
+| so that only a match opens a new tab. Shares the typeahead's throttle: it is
+| called on the same rhythm, as someone types.
+*/
+Route::get('/resolve', ResolveController::class)
+    ->middleware($suggestThrottle)
+    ->name('resolve');
+
 /* Static CMS pages, plus the two the reference site exposes by name. */
 Route::get('/peringatan', fn () => app(PageController::class)('peringatan'))->name('peringatan');
 Route::get('/privacy-policy', fn () => app(PageController::class)('privacy-policy'))->name('privacy-policy');
@@ -52,7 +62,7 @@ Route::get('/p/{slug}', PageController::class)->name('page');
 Route::get('/robots.txt', function () {
     // Redirect endpoints must never be indexed; the destination belongs to
     // whoever owns it, not to this site's search presence.
-    $body = "User-agent: *\nDisallow: /s/\nDisallow: /go/\nDisallow: /suggest\nDisallow: /"
+    $body = "User-agent: *\nDisallow: /s/\nDisallow: /go/\nDisallow: /suggest\nDisallow: /resolve\nDisallow: /"
         .config('search.panel_path')."\n\nSitemap: ".url('/sitemap.xml')."\n";
 
     return response($body, 200, ['Content-Type' => 'text/plain']);

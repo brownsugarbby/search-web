@@ -8,7 +8,15 @@
          tab and leaves the visitor's search box where they left it. With the
          results list on, that page is ours and stays in-tab - the "Cari cepat"
          button below carries its own target, because it always jumps out. --}}
-    @if (! config('search.results_page_enabled')) target="_blank" @endif
+    {{-- Only a query already known to lead somewhere opens a tab; see
+         checkTarget() in app.js. rel="opener" because browsers apply an
+         implicit noopener to every _blank navigation, forms included, and the
+         new tab needs the opener to hand back a result that went stale between
+         the check and the submit. --}}
+    @if (! config('search.results_page_enabled'))
+        :target="hit ? '_blank' : ''"
+        :rel="hit ? 'opener' : ''"
+    @endif
     class="w-full"
     x-data="suggest(@js($query), @js((bool) config('search.recent_searches_enabled')))"
     @click.outside="close()"
@@ -33,6 +41,8 @@
             enterkeyhint="search"
             @if (! $compact) autofocus @endif
             x-model="term"
+            x-init="$data.checkTarget()"
+            @input="$data.checkTarget()"
             @keydown.escape="close()"
             @keydown.enter="onEnter($event)"
             class="w-full rounded-2xl border border-slate-200 bg-white py-4 pr-12 pl-13 text-base shadow-sm
@@ -123,7 +133,7 @@
             type="submit"
             name="lucky"
             value="1"
-            formtarget="_blank"
+            :formtarget="hit ? '_blank' : ''"
             class="rounded-xl bg-slate-100 px-6 py-2.5 text-sm font-medium text-slate-700 transition
                    hover:bg-slate-200 focus:ring-4 focus:ring-slate-400/20 focus:outline-none
                    dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
