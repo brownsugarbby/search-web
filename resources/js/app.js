@@ -65,7 +65,8 @@ Alpine.data('suggest', (initial = '', keepRecent = false) => ({
         // otherwise let the form submit normally.
         if (this.open && this.active >= 0) {
             event.preventDefault();
-            window.location.href = `/go/${this.items[this.active].slug}`;
+            // New tab, matching what clicking the same row does.
+            window.open(`/go/${this.items[this.active].slug}`, '_blank', 'noopener');
         }
     },
 

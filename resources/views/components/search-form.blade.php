@@ -4,6 +4,11 @@
 <form
     action="{{ route('home') }}"
     method="GET"
+    {{-- In redirect mode a search lands on someone else's site, so it opens a
+         tab and leaves the visitor's search box where they left it. With the
+         results list on, that page is ours and stays in-tab - the "Cari cepat"
+         button below carries its own target, because it always jumps out. --}}
+    @if (! config('search.results_page_enabled')) target="_blank" @endif
     class="w-full"
     x-data="suggest(@js($query), @js((bool) config('search.recent_searches_enabled')))"
     @click.outside="close()"
@@ -75,6 +80,8 @@
                     <li>
                         <a
                             :href="`/go/${item.slug}`"
+                            target="_blank"
+                            rel="noopener"
                             @mouseenter="active = i"
                             :class="active === i ? 'bg-slate-50 dark:bg-slate-800' : ''"
                             class="flex items-center gap-3 px-4 py-3 transition"
@@ -116,6 +123,7 @@
             type="submit"
             name="lucky"
             value="1"
+            formtarget="_blank"
             class="rounded-xl bg-slate-100 px-6 py-2.5 text-sm font-medium text-slate-700 transition
                    hover:bg-slate-200 focus:ring-4 focus:ring-slate-400/20 focus:outline-none
                    dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"

@@ -96,7 +96,7 @@
                 <span class="mb-3 block text-xs font-medium tracking-wide text-slate-400 uppercase">Sering dibuka</span>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     @foreach ($popularLinks as $link)
-                        <a href="{{ route('go', $link) }}" rel="noopener"
+                        <a href="{{ route('go', $link) }}" target="_blank" rel="noopener"
                            class="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5
                                   transition hover:border-blue-400 hover:shadow-sm
                                   dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-600">

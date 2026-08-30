@@ -19,7 +19,7 @@
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
         @foreach ($links as $link)
-            <a href="{{ route('go', $link) }}" rel="noopener"
+            <a href="{{ route('go', $link) }}" target="_blank" rel="noopener"
                class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 transition
                       hover:border-blue-400 hover:shadow-sm
                       dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-600">

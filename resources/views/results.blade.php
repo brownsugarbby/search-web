@@ -34,7 +34,7 @@
                        dark:border-slate-800 dark:hover:border-blue-700">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <a href="{{ route('go', $link) }}" rel="noopener"
+                        <a href="{{ route('go', $link) }}" target="_blank" rel="noopener"
                            class="text-base font-medium text-blue-700 hover:underline dark:text-blue-400">
                             {{ $link->title }}
                         </a>
