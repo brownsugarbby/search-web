@@ -75,6 +75,24 @@ Alpine.data('suggest', (initial = '', keepRecent = false) => ({
         }, 250);
     },
 
+    /*
+     * A search that opens in a new tab leaves this page exactly as it was -
+     * which, after a failed search, means a "no results" for a query the
+     * visitor has already moved on from, and a stale ?q= in the address bar.
+     * Clear both, so the tab they are left looking at is a fresh search box.
+     *
+     * Only when a tab is actually opening: an in-tab search is about to
+     * replace this page anyway.
+     */
+    clearStaleResult() {
+        if (!this.hit) return;
+
+        setTimeout(() => {
+            document.getElementById('no-results')?.remove();
+            history.replaceState({}, '', window.location.pathname);
+        }, 0);
+    },
+
     focusInput() {
         this.$refs.input?.focus();
     },

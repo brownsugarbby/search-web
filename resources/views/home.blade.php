@@ -1,14 +1,19 @@
 @extends('layouts.app')
 
 {{--
-    A search opens in a new tab because it normally lands on someone else's
-    site. A miss has nothing worth a second tab, so hand the message back to
-    the tab the visitor is still looking at and close this one.
+    Two things a failed search has to tidy up after itself.
 
-    In the head, and before anything is painted, so the empty tab is never
-    seen. close() is allowed here: this tab holds a single document, which
-    makes it script-closable. Where it is refused the page simply stays, which
-    is the old behaviour and no worse.
+    Where a tab was opened for it anyway - the entry went away between the
+    form's check and the submit - hand the message back to the tab the visitor
+    is still looking at and close this one. In the head, before anything is
+    painted, so an empty tab is never seen. close() is allowed here: this tab
+    holds a single document, which makes it script-closable. Where a browser
+    refuses, the page simply stays, which is no worse than before.
+
+    Then drop ?q= from the address bar. The query stays in the box to be
+    edited, but reloading gives a fresh search rather than serving the same
+    "no results" back again - and a search that found nothing is not an
+    address worth keeping, bookmarking or sharing.
 --}}
 @if (! empty($noResults))
     @push('head')
@@ -17,6 +22,8 @@
                 window.opener.location.href = @js(url()->full());
                 window.close();
             }
+
+            history.replaceState({}, '', window.location.pathname);
         </script>
     @endpush
 @endif
@@ -55,7 +62,10 @@
         {{-- Both a failed search and a shared link whose entry is gone land
              here, so this state does real work rather than being a dead end. --}}
         @if (! empty($noResults) || session('deadLink'))
-            <div class="mt-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3
+            {{-- id: the next search may leave this page standing, in which case
+                 it clears this itself. See clearStaleResult() in app.js. --}}
+            <div id="no-results"
+                 class="mt-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3
                         dark:border-amber-900/40 dark:bg-amber-950/30">
                 <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" fill="none" stroke="currentColor"
                      stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">

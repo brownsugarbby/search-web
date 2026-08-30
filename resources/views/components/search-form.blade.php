@@ -19,6 +19,7 @@
     @endif
     class="w-full"
     x-data="suggest(@js($query), @js((bool) config('search.recent_searches_enabled')))"
+    @submit="$data.clearStaleResult()"
     @click.outside="close()"
     @keydown.window.prevent.slash="focusInput()"
 >
