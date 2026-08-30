@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="id" class="h-full">
+<html lang="id" class="dark h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
     <title>@yield('title', $siteName)</title>
     <meta name="description" content="@yield('meta_description', $metaDescription)">
     @hasSection('noindex')

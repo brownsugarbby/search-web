@@ -1,6 +1,14 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+/*
+ * The site is dark, always. Tailwind's default `dark:` variant follows the
+ * visitor's OS setting, which made half of them see a white page; binding the
+ * variant to a class instead means `<html class="dark">` decides, and nothing
+ * else does. Every `dark:` utility already written keeps working unchanged.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
@@ -11,4 +19,9 @@
 
 [x-cloak] {
     display: none !important;
+}
+
+/* Scrollbars, form controls and autofill follow this, not the utilities. */
+:root {
+    color-scheme: dark;
 }
