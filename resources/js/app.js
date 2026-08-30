@@ -41,6 +41,8 @@ Alpine.data('suggest', (initial = '', keepRecent = false) => ({
      * results" is the thing being fixed.
      */
     hit: false,
+    /** The term `hit` is an answer to. Anything else means "not asked yet". */
+    checkedTerm: null,
     checkTimer: null,
 
     /*
@@ -54,6 +56,7 @@ Alpine.data('suggest', (initial = '', keepRecent = false) => ({
 
         clearTimeout(state.checkTimer);
         state.hit = false;
+        state.checkedTerm = null;
 
         const q = state.term.trim();
 
@@ -69,6 +72,7 @@ Alpine.data('suggest', (initial = '', keepRecent = false) => ({
                 if (!res.ok || q !== state.term.trim()) return;
 
                 state.hit = (await res.json()).hit === true;
+                state.checkedTerm = q;
             } catch {
                 // Offline, blocked, rate-limited: leave it in-tab.
             }
@@ -84,6 +88,60 @@ Alpine.data('suggest', (initial = '', keepRecent = false) => ({
      * Only when a tab is actually opening: an in-tab search is about to
      * replace this page anyway.
      */
+    /**
+     * Decide where a submitted search opens.
+     *
+     * Normally the answer is already in - checkTarget() asked while the
+     * visitor was typing - and the form's own target does the work. But Enter
+     * can arrive inside the debounce, and a search that stayed in-tab because
+     * nobody had answered yet is the whole complaint this handles.
+     *
+     * So when the answer is not in yet, open the tab here, synchronously,
+     * while the browser still counts this as the click the visitor made. A
+     * window.open() issued after the fetch resolves is a popup the browser
+     * never saw asked for, and gets blocked.
+     */
+    async onSubmit(event) {
+        const term = this.term.trim();
+
+        if (term === '' || this.checkedTerm === term) {
+            this.clearStaleResult();
+
+            return;
+        }
+
+        event.preventDefault();
+
+        const lucky = event.submitter?.name === 'lucky';
+        const url = `/?q=${encodeURIComponent(term)}${lucky ? '&lucky=1' : ''}`;
+        const tab = window.open('', '_blank');
+
+        let hit = false;
+
+        try {
+            const res = await fetch(`/resolve?q=${encodeURIComponent(term)}`, {
+                headers: { Accept: 'application/json' },
+            });
+            hit = res.ok && (await res.json()).hit === true;
+        } catch {
+            // Treat an unreachable check as a miss and stay in this tab.
+        }
+
+        this.hit = hit;
+        this.checkedTerm = term;
+
+        // No tab means the browser blocked the popup; in-tab is the fallback.
+        if (hit && tab) {
+            tab.location = url;
+            this.clearStaleResult();
+
+            return;
+        }
+
+        tab?.close();
+        window.location = url;
+    },
+
     clearStaleResult() {
         if (!this.hit) return;
 
