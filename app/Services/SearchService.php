@@ -36,11 +36,23 @@ class SearchService
             return new Collection;
         }
 
-        $ids = Cache::remember(
-            $this->cacheKey($normalized),
-            config('search.cache_ttl'),
-            fn () => $this->resolveIds($normalized),
-        );
+        $key = $this->cacheKey($normalized);
+        $ids = Cache::get($key);
+
+        if ($ids === null) {
+            $ids = $this->resolveIds($normalized);
+
+            /*
+             * A miss is deliberately not cached. An admin who searches for a
+             * keyword, finds nothing, adds it, and searches again would
+             * otherwise keep seeing nothing until the TTL ran out - which
+             * reads as a broken search rather than a cached one. A miss is
+             * also the cheap case: one indexed lookup, nothing to protect.
+             */
+            if ($ids !== []) {
+                Cache::put($key, $ids, config('search.cache_ttl'));
+            }
+        }
 
         if ($ids === []) {
             return new Collection;
@@ -63,16 +75,41 @@ class SearchService
         );
     }
 
+    /** Bumped whenever the catalog changes; see forget(). */
+    private const VERSION_KEY = 'search:version';
+
     /**
      * Results resolved under one tier configuration must not be served after
-     * that configuration changes, so the key carries it.
+     * that configuration changes, so the key carries it - and so does a
+     * version that moves whenever a link or keyword is edited.
      */
     private function cacheKey(string $normalized): string
     {
         $tiers = (int) config('search.tiers.prefix_enabled')
             .(int) config('search.tiers.fulltext_enabled');
 
-        return 'search:'.$tiers.':'.sha1($normalized);
+        return 'search:'.$this->version().':'.$tiers.':'.sha1($normalized);
+    }
+
+    private function version(): int
+    {
+        return (int) Cache::get(self::VERSION_KEY, 1);
+    }
+
+    /**
+     * Retire every cached result.
+     *
+     * A version bump rather than a scan: the store is the database driver,
+     * which has no tags, and the keys are hashes of queries nobody has a list
+     * of. Orphaned entries fall out on their own TTL.
+     *
+     * This matters most in the other direction from a stale miss: a keyword
+     * an admin has just detached must stop redirecting people immediately,
+     * not in ten minutes.
+     */
+    public static function forget(): void
+    {
+        Cache::forever(self::VERSION_KEY, (int) Cache::get(self::VERSION_KEY, 1) + 1);
     }
 
     /** The single link a redirect should send someone to, or null. */

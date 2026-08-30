@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\QueryNormalizer;
+use App\Services\SearchService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -23,6 +24,10 @@ class Keyword extends Model
             $keyword->keyword_normalized = app(QueryNormalizer::class)
                 ->normalize($keyword->keyword_normalized ?: $keyword->keyword);
         });
+
+        // Renaming or removing a keyword changes what queries resolve to.
+        static::saved(fn () => SearchService::forget());
+        static::deleted(fn () => SearchService::forget());
     }
 
     public function links(): BelongsToMany

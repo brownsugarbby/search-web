@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\AuditLog;
 use App\Models\Link;
+use App\Services\SearchService;
 use Illuminate\Support\Facades\Auth;
 
 class LinkObserver
@@ -11,6 +12,10 @@ class LinkObserver
     public function saved(Link $link): void
     {
         $this->refreshSearchBlob($link);
+
+        // The panel syncs the keyword pivot right after this fires, so the
+        // bump lands before the next search reads anything back.
+        SearchService::forget();
     }
 
     public function created(Link $link): void
@@ -42,11 +47,13 @@ class LinkObserver
     public function deleted(Link $link): void
     {
         $this->audit($link, 'deleted', $link->getOriginal(), null);
+        SearchService::forget();
     }
 
     public function restored(Link $link): void
     {
         $this->audit($link, 'restored', null, $link->getAttributes());
+        SearchService::forget();
     }
 
     /**

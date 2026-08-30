@@ -1,5 +1,26 @@
 @extends('layouts.app')
 
+{{--
+    A search opens in a new tab because it normally lands on someone else's
+    site. A miss has nothing worth a second tab, so hand the message back to
+    the tab the visitor is still looking at and close this one.
+
+    In the head, and before anything is painted, so the empty tab is never
+    seen. close() is allowed here: this tab holds a single document, which
+    makes it script-closable. Where it is refused the page simply stays, which
+    is the old behaviour and no worse.
+--}}
+@if (! empty($noResults))
+    @push('head')
+        <script>
+            if (window.opener && !window.opener.closed) {
+                window.opener.location.href = @js(url()->full());
+                window.close();
+            }
+        </script>
+    @endpush
+@endif
+
 @section('content')
 <div class="relative flex flex-1 flex-col">
 

@@ -11,6 +11,7 @@
     @endif
     <link rel="icon" href="{{ $favicon }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
 </head>
 <body class="flex min-h-full flex-col bg-white text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
 
